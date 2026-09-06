@@ -7,16 +7,16 @@ Pin sessions as "ongoing" to keep them at the top and restore them in bulk.
 
 Filename convention: the ".5m" suffix tells SwiftBar to refresh every 5 minutes.
 
-Menu colors: SwiftBar 2.1.1 resolves its theme from the "AppleInterfaceStyle"
-default, which reads nil on recent macOS builds even in dark mode, so both
-plugin-side theme detection and SwiftBar's own "light,dark" color pairs pick
-the light variant on a dark menu. Rule used here: primary text gets no color
-parameter (the system's adaptive label color always matches the menu), and
-accents use single mid-tone hues that read on both light and dark backgrounds.
+Menu colors: primary text gets no color parameter, so the system's adaptive
+label color always matches the menu. Accents and muted text come from a light
+or dark palette. The theme comes from SwiftBar's OS_APPEARANCE variable (it
+tracks live switches, including the Auto appearance schedule), then from the
+AppleInterfaceStyle default, and can be forced with the `appearance` config key.
 """
 import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -35,10 +35,59 @@ MAX_YESTERDAY = int(CFG["max_yesterday"])
 MAX_THIS_WEEK = int(CFG["max_this_week"])
 MAX_OLDER = int(CFG["max_older"])
 
-ACCENT_BLUE = "#4D7AFF"
-ACCENT_ORANGE = "#FF9000"
-TEXT_MUTED = "#9ca3af"
-SUCCESS = "#10b981"
+# Two palettes. Blue is lifted in dark mode for legibility; the rest follows
+# the light / dark text and status tokens of the design language.
+PALETTES = {
+    "light": {
+        "blue": "#0019FF",
+        "orange": "#FF9000",
+        "success": "#059669",
+        "muted": "#6b6862",      # secondary text on a light menu
+        "muted_dim": "#a09b92",  # tertiary labels ("+N more")
+    },
+    "dark": {
+        "blue": "#4D7AFF",
+        "orange": "#FF9000",
+        "success": "#34d399",
+        "muted": "#a09b90",
+        "muted_dim": "#8a867c",
+    },
+}
+
+
+def detect_appearance():
+    """Return "light" or "dark".
+
+    Order: the `appearance` config key when set to light/dark; SwiftBar's
+    OS_APPEARANCE variable (verified to follow live switches on macOS 26);
+    the AppleInterfaceStyle default (present only while dark is active);
+    light as the last resort.
+    """
+    forced = str(CFG.get("appearance") or "auto").strip().lower()
+    if forced in ("light", "dark"):
+        return forced
+    from_swiftbar = os.environ.get("OS_APPEARANCE", "").strip().lower()
+    if from_swiftbar in ("light", "dark"):
+        return from_swiftbar
+    try:
+        out = subprocess.run(
+            ["defaults", "read", "-g", "AppleInterfaceStyle"],
+            capture_output=True, text=True, timeout=2,
+        )
+        if out.stdout.strip().lower() == "dark":
+            return "dark"
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "light"
+
+
+APPEARANCE = detect_appearance()
+PALETTE = PALETTES[APPEARANCE]
+ACCENT_BLUE = PALETTE["blue"]
+ACCENT_ORANGE = PALETTE["orange"]
+SUCCESS = PALETTE["success"]
+TEXT_MUTED = PALETTE["muted"]
+TEXT_MUTED_DIM = PALETTE["muted_dim"]
 
 CACHE_VERSION = 2
 
@@ -418,7 +467,7 @@ def render_group(groups, key, label, color, limit, ongoing_sids, show_project, r
         render_session_line(sid, s, dt, key, ongoing_sids, show_project, row_color)
     remaining = len(entries) - limit
     if remaining > 0:
-        print(f"  +{remaining} more | color={TEXT_MUTED} size=11")
+        print(f"  +{remaining} more | color={TEXT_MUTED_DIM} size=11")
     print("---")
 
 
@@ -478,7 +527,7 @@ def main():
     render_group(groups, "today", "TODAY", ACCENT_BLUE, MAX_TODAY, ongoing_sids, show_project)
     render_group(groups, "yesterday", "YESTERDAY", ACCENT_BLUE, MAX_YESTERDAY, ongoing_sids, show_project)
     render_group(groups, "this_week", "THIS WEEK", TEXT_MUTED, MAX_THIS_WEEK, ongoing_sids, show_project)
-    render_group(groups, "older", "OLDER", TEXT_MUTED, MAX_OLDER, ongoing_sids, show_project, TEXT_MUTED)
+    render_group(groups, "older", "OLDER", TEXT_MUTED_DIM, MAX_OLDER, ongoing_sids, show_project, TEXT_MUTED)
 
     if not any(groups[k] for k in groups):
         print(f"No sessions found | color={TEXT_MUTED} size=13")

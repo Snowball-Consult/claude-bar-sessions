@@ -35,6 +35,7 @@ DEFAULTS = {
     "title_model": "haiku",
     "naming_prompt_file": "",
     "menu_label": "CC",
+    "appearance": "auto",
     "max_today": 20,
     "max_yesterday": 10,
     "max_this_week": 8,
