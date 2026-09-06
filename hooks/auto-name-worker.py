@@ -57,6 +57,15 @@ def log(action, session_id, name="", note=""):
         pass
 
 
+def clean_env():
+    """Environment for the inner claude -p: drop every CLAUDE* variable a parent
+    Claude Code session exported, so the naming call is a standalone run and
+    cannot inherit the parent's session identity or transcript."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")}
+    env["AUTONAME_IN_PROGRESS"] = "1"
+    return env
+
+
 def naming_instructions():
     path = cbs.load_config().get("naming_prompt_file") or ""
     if path:
@@ -107,7 +116,7 @@ def main():
                         naming_instructions() + prompt,
                     ],
                     capture_output=True, text=True, timeout=TIMEOUT_SECONDS,
-                    stdin=subprocess.DEVNULL, cwd="/tmp",
+                    stdin=subprocess.DEVNULL, cwd="/tmp", env=clean_env(),
                 )
                 if proc.returncode == 0:
                     name = sanitize_name(proc.stdout)

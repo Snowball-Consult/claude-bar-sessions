@@ -100,8 +100,10 @@ def generate_summary(first_prompt, session_date):
                 prompt,
             ],
             capture_output=True, text=True, timeout=30, cwd="/tmp",
-            # Tell the naming hook inside the inner claude -p to stay quiet.
-            env={**os.environ, "AUTONAME_IN_PROGRESS": "1"},
+            # Standalone run: no CLAUDE* vars from a parent session, and the
+            # naming hook inside the inner claude -p stays quiet.
+            env={**{k: v for k, v in os.environ.items() if not k.startswith("CLAUDE")},
+                 "AUTONAME_IN_PROGRESS": "1"},
         )
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
