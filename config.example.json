@@ -1,0 +1,13 @@
+{
+  "claude_home": "~/.claude",
+  "projects": [],
+  "exclude_projects": ["/tmp", "/private/tmp"],
+  "claude_bin": "",
+  "title_model": "haiku",
+  "naming_prompt_file": "",
+  "menu_label": "CC",
+  "max_today": 20,
+  "max_yesterday": 10,
+  "max_this_week": 8,
+  "max_older": 10
+}
