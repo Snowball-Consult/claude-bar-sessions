@@ -63,7 +63,7 @@ def save_cache(cache):
 
 
 def needs_summary(session):
-    if session.get("aiSummary") or session.get("customTitle"):
+    if session.get("aiSummary") or session.get("customTitle") or session.get("aiTitle"):
         return False
     if not session.get("firstPrompt") or session.get("isSidechain"):
         return False
@@ -95,6 +95,7 @@ def generate_summary(first_prompt, session_date):
                 cbs.find_claude(), "-p",
                 "--model", cbs.load_config()["title_model"],
                 "--tools", "",
+                "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
                 "--no-session-persistence",
                 "--system-prompt", SYSTEM_PROMPT,
                 prompt,

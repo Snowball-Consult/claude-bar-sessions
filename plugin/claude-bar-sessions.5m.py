@@ -89,7 +89,7 @@ SUCCESS = PALETTE["success"]
 TEXT_MUTED = PALETTE["muted"]
 TEXT_MUTED_DIM = PALETTE["muted_dim"]
 
-CACHE_VERSION = 2
+CACHE_VERSION = 3
 
 
 # --------------------------------------------------------------------------
@@ -145,6 +145,7 @@ def parse_jsonl_session(filepath):
     """Read one session transcript and return its metadata, or None if empty."""
     first_prompt = None
     custom_title = None
+    ai_title = None
     created = None
     cwd = None
     user_count = 0
@@ -179,18 +180,22 @@ def parse_jsonl_session(filepath):
                 elif entry_type == "custom-title":
                     # The last custom-title entry in file order is the current one.
                     custom_title = entry.get("customTitle")
+                elif entry_type == "ai-title":
+                    # Claude Code's own generated session title (2.1.x and later).
+                    ai_title = entry.get("aiTitle")
 
                 if entry.get("isSidechain") and entry_type in ("user", "assistant"):
                     is_sidechain = True
     except OSError:
         return None
 
-    if first_prompt is None and custom_title is None:
+    if first_prompt is None and custom_title is None and ai_title is None:
         return None
 
     return {
         "firstPrompt": first_prompt or "",
         "customTitle": custom_title,
+        "aiTitle": ai_title,
         "created": created,
         "cwd": cwd or cbs.cwd_from_project_dirname(filepath.parent.name),
         "messageCount": user_count,
@@ -226,6 +231,7 @@ def scan_jsonl_sessions(cache):
         sessions[session_id] = {
             "firstPrompt": parsed["firstPrompt"],
             "customTitle": parsed["customTitle"],
+            "aiTitle": parsed["aiTitle"],
             "aiSummary": cached.get("aiSummary") if cached else None,
             "summary": cached.get("summary") if cached else None,
             "created": parsed["created"],
@@ -337,9 +343,12 @@ def clean_first_prompt(text):
 
 
 def get_display_name(session):
-    """Title priority: /rename or hook title, batch AI summary, index summary, first prompt."""
+    """Title priority: /rename or hook title, Claude Code's own title, batch AI
+    summary, index summary, first prompt."""
     if session.get("customTitle"):
         return session["customTitle"]
+    if session.get("aiTitle"):
+        return session["aiTitle"]
     if session.get("aiSummary"):
         return session["aiSummary"]
     summary = session.get("summary")

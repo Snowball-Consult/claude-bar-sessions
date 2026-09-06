@@ -42,13 +42,14 @@ To remove everything: `./uninstall.sh`. It leaves SwiftBar and the state folder 
 For each session, the first available of:
 
 1. **Custom title** from `/rename` or from the naming hook (stored in the transcript as a `custom-title` entry).
-2. **Batch title** from `generate-session-summaries.py` (stored in the plugin cache).
-3. **Summary** from `sessions-index.json`, which older Claude Code versions maintained.
-4. **First prompt**, cleaned and cut to about ten words.
+2. **Claude Code's own title** (the `ai-title` entry that Claude Code 2.1 and later writes into the transcript).
+3. **Batch title** from `generate-session-summaries.py` (stored in the plugin cache).
+4. **Summary** from `sessions-index.json`, which older Claude Code versions maintained.
+5. **First prompt**, cleaned and cut to about ten words.
 
 ## The naming hook
 
-`hooks/auto-name-session.py` runs on `UserPromptSubmit`. On the first prompt of an unnamed session it starts a detached worker that asks Claude (Haiku by default) for a 4-9 word Title Case name and returns immediately, so the prompt is never delayed. On the next prompt it applies the name. A session you rename yourself is locked and never touched again. State lives in `~/.local/state/claude-bar-sessions/`.
+`hooks/auto-name-session.py` runs on `UserPromptSubmit`. On the first prompt of an unnamed session it starts a detached worker that asks Claude (Haiku by default) for a 4-9 word Title Case name and returns immediately, so the prompt is never delayed. The naming call runs with no tools and no MCP servers, so it stays small however many connectors your account has. On the next prompt it applies the name. A session you rename yourself is locked and never touched again. State lives in `~/.local/state/claude-bar-sessions/`.
 
 Wire it with `./install.sh --hook`, or add this to `~/.claude/settings.json` by hand:
 

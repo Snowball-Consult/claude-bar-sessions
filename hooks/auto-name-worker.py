@@ -111,6 +111,10 @@ def main():
                         cbs.find_claude(), "-p",
                         "--model", cbs.load_config()["title_model"],
                         "--tools", "",
+                        # No MCP servers: --tools "" leaves MCP tool schemas in
+                        # place, and a large set of connectors alone can push a
+                        # one-line naming request past the context limit.
+                        "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
                         "--no-session-persistence",
                         "--disable-slash-commands",
                         naming_instructions() + prompt,
@@ -123,7 +127,9 @@ def main():
                     if not name:
                         note = f"sanitize-rejected: {proc.stdout[:80]!r}"
                 else:
-                    note = f"claude-rc-{proc.returncode}: {proc.stderr[:120]}"
+                    # claude -p reports most errors on stdout; keep both streams.
+                    note = (f"claude-rc-{proc.returncode}: out={proc.stdout.strip()[:200]!r} "
+                            f"err={proc.stderr.strip()[:120]!r}")
             except subprocess.TimeoutExpired:
                 note = f"timeout-{TIMEOUT_SECONDS}s"
             except Exception as e:
