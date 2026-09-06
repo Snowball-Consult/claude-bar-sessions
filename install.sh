@@ -42,12 +42,25 @@ command -v python3 >/dev/null || { echo "python3 is required (xcode-select --ins
 
 # ---------------------------------------------------------------------------
 step "SwiftBar"
-if [ -d /Applications/SwiftBar.app ]; then
-  say "already installed"
+find_swiftbar() {
+  local c
+  for c in /Applications/SwiftBar.app "$HOME/Applications/SwiftBar.app" /Applications/Setapp/SwiftBar.app; do
+    [ -d "$c" ] && { echo "$c"; return; }
+  done
+  mdfind "kMDItemCFBundleIdentifier == 'com.ameba.SwiftBar'" 2>/dev/null | head -1
+}
+SWIFTBAR_APP="$(find_swiftbar)"
+if [ -n "$SWIFTBAR_APP" ]; then
+  say "already installed at $SWIFTBAR_APP"
 elif command -v brew >/dev/null; then
-  # --no-quarantine: a quarantined SwiftBar can hang on first launch when opened
-  # from a script (Gatekeeper's dialog never gets answered).
-  run "brew install --cask --no-quarantine swiftbar"
+  # Older Homebrew accepts --no-quarantine; Homebrew 5 dropped the flag. Either
+  # way, strip the quarantine attribute afterwards: a quarantined SwiftBar can
+  # hang on first launch when opened from a script (Gatekeeper's dialog never
+  # gets answered).
+  run "brew install --cask --no-quarantine swiftbar 2>/dev/null || brew install --cask swiftbar"
+  SWIFTBAR_APP="/Applications/SwiftBar.app"
+  run "xattr -dr com.apple.quarantine '$SWIFTBAR_APP' 2>/dev/null || true"
+  run "defaults write com.ameba.SwiftBar SUEnableAutomaticChecks -bool false"
 else
   echo "Install SwiftBar first: https://github.com/swiftbar/SwiftBar/releases (or install Homebrew)." >&2
   exit 1
@@ -74,8 +87,6 @@ else
   run "defaults write com.ameba.SwiftBar PluginDirectory -string '$REPO/plugin'"
   say "SwiftBar plugin folder set to $REPO/plugin"
 fi
-run "defaults write com.ameba.SwiftBar SUEnableAutomaticChecks -bool false"
-
 # ---------------------------------------------------------------------------
 step "State folder"
 STATE_DIR="$(python3 "$REPO/lib/cbs.py" state_dir)"
@@ -125,7 +136,7 @@ if [ "$LOGIN_ITEM" = 1 ]; then
   if osascript -e 'tell application "System Events" to get name of every login item' 2>/dev/null | grep -q "SwiftBar"; then
     say "SwiftBar already in Login Items"
   else
-    run "osascript -e 'tell application \"System Events\" to make login item at end with properties {path:\"/Applications/SwiftBar.app\", hidden:false}' >/dev/null"
+    run "osascript -e 'tell application \"System Events\" to make login item at end with properties {path:\"$SWIFTBAR_APP\", hidden:false}' >/dev/null"
     say "added SwiftBar to Login Items"
   fi
 fi
