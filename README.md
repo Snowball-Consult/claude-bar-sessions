@@ -86,6 +86,7 @@ Optional. Create `~/.config/claude-bar-sessions/config.json` (start from `config
 | `title_model` | `haiku` | Model for the naming hook and the batch titler |
 | `naming_prompt_file` | none | Text file with your own naming instructions for the hook |
 | `menu_label` | `CC` | Text shown in the menu bar |
+| `terminal` | `Terminal` | Which terminal app resumed sessions open in. `Terminal` for macOS Terminal.app, `Ghostty` for [Ghostty](https://ghostty.org). An unrecognised value falls back to `Terminal`. |
 | `appearance` | `auto` | `auto` follows the system theme (via SwiftBar's `OS_APPEARANCE`, then the `AppleInterfaceStyle` default). `light` or `dark` forces a palette. |
 | `max_today`, `max_yesterday`, `max_this_week`, `max_older` | 20, 10, 8, 10 | Rows per group before "+N more" |
 
@@ -96,9 +97,10 @@ When sessions from more than one project are listed, each row shows the project 
 | Path | Purpose |
 |------|---------|
 | `plugin/claude-bar-sessions.5m.py` | The SwiftBar plugin. The only file SwiftBar runs. |
-| `bin/resume-session.sh` | Opens Terminal in the session's directory and runs `claude --resume` |
+| `bin/resume-session.sh` | Opens a terminal window in the session's directory and runs `claude --resume` |
 | `bin/pin-session.sh`, `bin/pin-current.sh` | Pin or unpin a session by ID, or the session you are currently inside |
 | `bin/restore-ongoing.sh` | Reopens every pinned session that is not running |
+| `lib/open-window.sh` | Opens a command in a new window of the configured terminal app |
 | `bin/generate-session-summaries.py` | Batch titler for older sessions |
 | `hooks/` | The naming hook and its worker and registry |
 | `lib/cbs.py` | Shared paths, config, and `claude` lookup |

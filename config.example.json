@@ -6,6 +6,7 @@
   "title_model": "haiku",
   "naming_prompt_file": "",
   "menu_label": "CC",
+  "terminal": "Terminal",
   "appearance": "auto",
   "max_today": 20,
   "max_yesterday": 10,

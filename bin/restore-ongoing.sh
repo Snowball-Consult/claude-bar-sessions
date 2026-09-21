@@ -1,8 +1,11 @@
 #!/bin/bash
 # Reopen every "ongoing" Claude Code session that is not currently running,
-# each in its own Terminal.app window and its own working directory.
+# each in its own terminal window and its own working directory.
+# Terminal app comes from the "terminal" key in config.json.
 set -e
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$HERE/../lib/open-window.sh"
+TERM_APP="$(python3 "$HERE/../lib/cbs.py" terminal)"
 
 LINES="$(python3 - "$HERE/../lib" <<'PY'
 import os, sys
@@ -41,9 +44,7 @@ fi
 COUNT=0
 while IFS=$'\t' read -r SID CWD; do
     [ -z "$SID" ] && continue
-    CMD="cd '$CWD' && claude --resume $SID"
-    ESCAPED="$(printf '%s' "$CMD" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-    osascript -e "tell application \"Terminal\" to do script \"$ESCAPED\"" >/dev/null
+    cbs_open_window "$CWD" "claude --resume $SID" "$TERM_APP" no
     COUNT=$((COUNT+1))
 done <<< "$LINES"
 

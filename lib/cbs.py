@@ -35,6 +35,7 @@ DEFAULTS = {
     "title_model": "haiku",
     "naming_prompt_file": "",
     "menu_label": "CC",
+    "terminal": "Terminal",
     "appearance": "auto",
     "max_today": 20,
     "max_yesterday": 10,
@@ -223,6 +224,8 @@ def main(argv):
         print(find_claude())
     elif key == "claude_home":
         print(claude_home())
+    elif key == "terminal":
+        print(load_config()["terminal"])
     elif key == "session_cwd":
         print(session_cwd(arg))
     elif key == "last_cwd":
