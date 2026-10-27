@@ -71,7 +71,7 @@ Wire it with `./install.sh --hook`, or add this to `~/.claude/settings.json` by 
 }
 ```
 
-To use your own naming instructions, put them in a text file and set `naming_prompt_file` in the config. The user's first prompt is appended to your text.
+To use your own naming instructions, put them in a text file and set `naming_prompt_file` in the config. Your text is sent as the system prompt; the user's first prompt is sent as the message, wrapped in `<first_prompt>` tags. A name the model copies from your examples is discarded.
 
 ## Configuration
 
